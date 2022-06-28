@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   TouchableHighlight,
   ToastAndroid,
+  Alert,
 } from 'react-native';
 import { auth, app } from '../../components/firebase/fire';
 import { updateProfile } from 'firebase/auth';
@@ -46,9 +47,9 @@ const Akun = () => {
     const url = await storage().ref(fileName).getDownloadURL();
 
     await updateProfile(auth.currentUser, { displayName: fullName, photoURL: url });
-    setProfilePicture(url)
+    setProfilePicture(url);
 
-    console.log({url})
+    Alert.alert('Berhasil!', 'Gambar berhasil diunggah');
 
     return url;
   };
@@ -57,6 +58,8 @@ const Akun = () => {
     const db = getFirestore(app);
 
     setDoc(doc(db, 'userData', email), data);
+
+    Alert.alert('Berhasil!', 'Profile pengguna berhasil diubah');
   }
 
   useEffect(() => {
