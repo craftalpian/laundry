@@ -19,6 +19,8 @@ import { updateProfile } from 'firebase/auth';
 import { getFirestore, collection, getDocs, doc, setDoc } from 'firebase/firestore/lite';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { getStorage, ref, uploadString } from "firebase/storage";
+import storage from '@react-native-firebase/storage';
+import { utils } from '@react-native-firebase/app';
 
 const Akun = () => {
   const [editable, setEditable] = useState(false);
@@ -27,7 +29,6 @@ const Akun = () => {
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
-  const [pathUrl, setPathUrl] = useState(null);
 
   async function getUser(fEmail) {
     const db = getFirestore(app);
@@ -37,36 +38,19 @@ const Akun = () => {
     return userList.filter((data) => data.email === fEmail);
   }
 
-  const uploadImage = async () => {
-    const storage = getStorage();
-    const storageRef = ref(storage, 'profile.png');
+  const uploadImage = async (fileName, pathUri) => {
+    console.log({fileName, pathUri})
+    const reference = storage().ref(fileName);
+    await reference.putFile(pathUri);
 
-    // // Raw string is the default if no format is provided
-    const message = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII";
-    uploadString(storageRef, message, {
-      contentType: 'image/jpeg',
-    }).then((snapshot) => {
-      console.log('Uploaded a raw string!');
-    });
+    const url = await storage().ref(fileName).getDownloadURL();
 
-    // // Base64 formatted string
-    // const message2 = '5b6p5Y+344GX44G+44GX44Gf77yB44GK44KB44Gn44Go44GG77yB';
-    // uploadString(storageRef, message2, 'data_url').then((snapshot) => {
-    //   console.log('Uploaded a base64 string!');
-    // });
+    await updateProfile(auth.currentUser, { displayName: fullName, photoURL: url });
+    setProfilePicture(url)
 
-    // // Base64url formatted string
-    // const message3 = '5b6p5Y-344GX44G-44GX44Gf77yB44GK44KB44Gn44Go44GG77yB';
-    // uploadString(storageRef, message3, 'base64url').then((snapshot) => {
-    //   console.log('Uploaded a base64url string!');
-    // });
+    console.log({url})
 
-    // // Data URL string
-    // const message4 = 'data:text/plain;base64,5b6p5Y+344GX44G+44GX44Gf77yB44GK44KB44Gn44Go44GG77yB';
-    // uploadString(storageRef, message4, 'data_url', { contentType: 'image/jpeg' }).then((snapshot) => {
-    //   console.log('Uploaded a data_url string!');
-    // });
-
+    return url;
   };
 
   async function updateUser(email, data) {
@@ -81,6 +65,7 @@ const Akun = () => {
       setFullName(displayName);
       setEmail(email);
       setPhoneNumber(phoneNumber);
+      setProfilePicture(photoURL);
 
       const userFirestore = await getUser(email);
       if (userFirestore.length > 0) {
@@ -89,9 +74,9 @@ const Akun = () => {
       } else {
         await updateUser(email, { email, phone_number: phoneNumber, address: '' });
       }
-
-      await uploadImage()
     }
+
+    // uploadImage()
 
     fetch();
   }, []);
@@ -111,9 +96,10 @@ const Akun = () => {
         {/* Gambar pengguna */}
         <TouchableWithoutFeedback onPress={() => {
           launchImageLibrary({ mediaType: 'photo' })
-            .then((src) => {
-              setPathUrl(src.assets[0].uri);
-              console.log(src.assets[0].uri)
+            .then(async(src) => {
+              const {fileName, uri} = src.assets[0];
+
+              await uploadImage(fileName, uri);
             })
             .catch(() => ToastAndroid.show('Batal memilih gambar', ToastAndroid.BOTTOM));
         }}>
