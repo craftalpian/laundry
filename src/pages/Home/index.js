@@ -1,30 +1,36 @@
-import { StyleSheet, Text, TouchableOpacity, View, Dimensions, ImageBackground, Image, Button } from 'react-native'
-import React from 'react'
-import { ScrollView } from 'react-native-gesture-handler';
-import { ImageHeader, Logo } from '../../assets'
-import { useNavigation } from '@react-navigation/native';
-import { auth } from '../../components/firebase/fire';
-import ButtonIcon from '../../components/ButtonIcon'
-import PesananAktif from '../../components/PesananAktif'
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Dimensions,
+  ImageBackground,
+  Image,
+  Button,
+} from 'react-native';
+import React from 'react';;
+import {ScrollView} from 'react-native-gesture-handler';
+import {ImageHeader, Logo} from '../../assets';
+import {useNavigation} from '@react-navigation/native';
+import {auth} from '../../components/firebase/fire';
+import ButtonIcon from '../../components/ButtonIcon';;
+import PesananAktif from '../../components/PesananAktif';;
 
 const Home = () => {
-  const navigation = useNavigation()
+  const navigation = useNavigation();;
   const Logout = () => {
     auth
       .signOut()
       .then(() => {
-        navigation.replace("Login")
+        navigation.replace('Login');
       })
-      .catch(error => alert(error.message))
-  }
+      .catch(error => alert(error.message));
+  };
   return (
     <ScrollView>
       <View style={styles.page}>
-        <ImageBackground
-          source={ImageHeader}
-          style={styles.header}
-        >
-          <View style={styles.hello}></View>
+        <ImageBackground source={ImageHeader} style={styles.header}>
+          <View style={styles.hello} />
           <Text style={styles.selamat}>Selamat Datang</Text>
           <Text style={styles.username}>{auth.currentUser?.email}</Text>
           <TouchableOpacity onPress={Logout}>
@@ -41,9 +47,9 @@ const Home = () => {
         </View>
         <View style={styles.pesananAktif}>
           <Text style={styles.label}>Pesanan Anda</Text>
-          <PesananAktif title='Pesanan No.1' status='Sudah Selesai'/>
-          <PesananAktif title='Pesanan No.2' status='Masih Di Cuci'/>
-          <PesananAktif title='Pesanan No.3' status='Sudah Selesai'/>
+          <PesananAktif title="Pesanan No.1" status="Sudah Selesai"/>
+          <PesananAktif title="Pesanan No.2" status="Masih Di Cuci"/>
+          <PesananAktif title="Pesanan No.3" status="Sudah Selesai"/>
         </View>
       </View>
     </ScrollView>
@@ -85,13 +91,12 @@ const styles = StyleSheet.create({
   layanan: {
     paddingLeft: 30,
     paddingTop: 15,
-
   },
   label: {
     fontSize: 16,
     fontFamily: 'TitilliumWeb-Bold',
     color: 'black',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   iconLayanan: {
     flexDirection: 'row',
@@ -109,12 +114,10 @@ const styles = StyleSheet.create({
   texttombol: {
     color: '#fff',
     fontWeight: 'bold',
-
   },
   texttombol1: {
     color: '#fff',
     fontWeight: 'bold',
-
   },
   tombol: {
     alignSelf: 'center',
@@ -124,5 +127,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 5,
     marginTop: 5,
-},
+  },
 });
