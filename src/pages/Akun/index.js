@@ -1,5 +1,7 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable react-native/no-inline-styles */
+/* eslint-disable no-shadow */
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import {
   Text,
@@ -10,10 +12,13 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   TouchableHighlight,
+  ToastAndroid,
 } from 'react-native';
-import { auth } from '../../components/firebase/fire';
-import { updateProfile, updateCurrentUser } from 'firebase/auth';
+import { auth, app } from '../../components/firebase/fire';
+import { updateProfile } from 'firebase/auth';
+import { getFirestore, collection, getDocs, doc, setDoc } from 'firebase/firestore/lite';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { getStorage, ref, uploadString } from "firebase/storage";
 
 const Akun = () => {
   const [editable, setEditable] = useState(false);
@@ -24,13 +29,71 @@ const Akun = () => {
   const [address, setAddress] = useState('');
   const [pathUrl, setPathUrl] = useState(null);
 
-  useEffect(() => {
-    const { displayName, phoneNumber, photoURL, email } = auth.currentUser;
-    setFullName(displayName);
-    setEmail(email);
-    setPhoneNumber(phoneNumber);
+  async function getUser(fEmail) {
+    const db = getFirestore(app);
+    const userDataCollection = collection(db, 'userData');
+    const useSnapshot = await getDocs(userDataCollection);
+    const userList = useSnapshot.docs.map(doc => doc.data());
+    return userList.filter((data) => data.email === fEmail);
+  }
 
-    console.log(auth.currentUser)
+  const uploadImage = async () => {
+    const storage = getStorage();
+    const storageRef = ref(storage, 'profile.png');
+
+    // // Raw string is the default if no format is provided
+    const message = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII";
+    uploadString(storageRef, message, {
+      contentType: 'image/jpeg',
+    }).then((snapshot) => {
+      console.log('Uploaded a raw string!');
+    });
+
+    // // Base64 formatted string
+    // const message2 = '5b6p5Y+344GX44G+44GX44Gf77yB44GK44KB44Gn44Go44GG77yB';
+    // uploadString(storageRef, message2, 'data_url').then((snapshot) => {
+    //   console.log('Uploaded a base64 string!');
+    // });
+
+    // // Base64url formatted string
+    // const message3 = '5b6p5Y-344GX44G-44GX44Gf77yB44GK44KB44Gn44Go44GG77yB';
+    // uploadString(storageRef, message3, 'base64url').then((snapshot) => {
+    //   console.log('Uploaded a base64url string!');
+    // });
+
+    // // Data URL string
+    // const message4 = 'data:text/plain;base64,5b6p5Y+344GX44G+44GX44Gf77yB44GK44KB44Gn44Go44GG77yB';
+    // uploadString(storageRef, message4, 'data_url', { contentType: 'image/jpeg' }).then((snapshot) => {
+    //   console.log('Uploaded a data_url string!');
+    // });
+
+  };
+
+  async function updateUser(email, data) {
+    const db = getFirestore(app);
+
+    setDoc(doc(db, 'userData', email), data);
+  }
+
+  useEffect(() => {
+    async function fetch() {
+      const { displayName, phoneNumber, photoURL, email } = auth.currentUser;
+      setFullName(displayName);
+      setEmail(email);
+      setPhoneNumber(phoneNumber);
+
+      const userFirestore = await getUser(email);
+      if (userFirestore.length > 0) {
+        setAddress(userFirestore[0].address);
+        setPhoneNumber(userFirestore[0].phone_number);
+      } else {
+        await updateUser(email, { email, phone_number: phoneNumber, address: '' });
+      }
+
+      await uploadImage()
+    }
+
+    fetch();
   }, []);
 
   return (
@@ -46,7 +109,14 @@ const Akun = () => {
           borderBottomRightRadius: 20,
         }}>
         {/* Gambar pengguna */}
-        <TouchableWithoutFeedback onPress={() => launchImageLibrary({ mediaType: 'photo' }, (res) => console.log(res))}>
+        <TouchableWithoutFeedback onPress={() => {
+          launchImageLibrary({ mediaType: 'photo' })
+            .then((src) => {
+              setPathUrl(src.assets[0].uri);
+              console.log(src.assets[0].uri)
+            })
+            .catch(() => ToastAndroid.show('Batal memilih gambar', ToastAndroid.BOTTOM));
+        }}>
           <Image
             source={{
               uri: profilePicture,
@@ -119,6 +189,62 @@ const Akun = () => {
           />
         </View>
 
+        <View style={{ borderBottomWidth: 1, borderColor: '#E0E0E0', marginBottom: 15, marginHorizontal: 15 }} />
+
+        <View style={{ marginHorizontal: 20 }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: 'TitilliumWeb-Bold',
+              color: 'black',
+              fontWeight: 'bold',
+            }}>
+            Nomor Telepon
+          </Text>
+          <TextInput
+            placeholder={'Masukkan Nomor Telepon Anda'}
+            value={phoneNumber}
+            onChangeText={(phoneNumber) => setPhoneNumber(phoneNumber)}
+            style={{
+              fontSize: 14,
+              fontFamily: 'TitilliumWeb-Light',
+              color: 'gray',
+              paddingLeft: 0,
+              paddingTop: 5,
+            }}
+            keyboardType={'phone-pad'}
+            editable={editable}
+          />
+        </View>
+
+        <View style={{ borderBottomWidth: 1, borderColor: '#E0E0E0', marginBottom: 15, marginHorizontal: 15 }} />
+
+        <View style={{ marginHorizontal: 20 }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: 'TitilliumWeb-Bold',
+              color: 'black',
+              fontWeight: 'bold',
+            }}>
+            Alamat
+          </Text>
+          <TextInput
+            placeholder={'Masukkan alamat Anda'}
+            value={address}
+            onChangeText={(alamat) => setAddress(alamat)}
+            style={{
+              fontSize: 14,
+              fontFamily: 'TitilliumWeb-Light',
+              color: 'gray',
+              paddingLeft: 0,
+              paddingTop: 5,
+            }}
+            keyboardType={'default'}
+            editable={editable}
+          />
+        </View>
+
         <View
           style={{
             marginTop: 25,
@@ -127,16 +253,17 @@ const Akun = () => {
             flexDirection: 'row',
           }}>
           <TouchableHighlight underlayColor={'#FFFFFF'} onPress={async () => {
-            setEditable(!editable)
+            setEditable(!editable);
             if (editable) {
               try {
-                await updateProfile(auth.currentUser, { displayName: fullName, photoURL: profilePicture })
-                await updateCurrentUser(auth.currentUser, { phoneNumber })
+                await updateProfile(auth.currentUser, { displayName: fullName, photoURL: profilePicture });
+                // await updateCurrentUser(auth.currentUser, { phoneNumber });
+                await updateUser(email, { address, phone_number: phoneNumber, email });
 
-                const user = auth.currentUser
-                console.log(user)
+                const user = auth.currentUser;
+                console.log(user);
               } catch (error) {
-                console.log({ error })
+                console.log({ error });
               }
             }
           }}>
