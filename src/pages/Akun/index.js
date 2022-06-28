@@ -18,10 +18,8 @@ import {
 import { auth, app } from '../../components/firebase/fire';
 import { updateProfile } from 'firebase/auth';
 import { getFirestore, collection, getDocs, doc, setDoc } from 'firebase/firestore/lite';
-import { launchImageLibrary } from 'react-native-image-picker';
-import { getStorage, ref, uploadString } from "firebase/storage";
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
-import { utils } from '@react-native-firebase/app';
 
 const Akun = () => {
   const [editable, setEditable] = useState(false);
@@ -40,7 +38,7 @@ const Akun = () => {
   }
 
   const uploadImage = async (fileName, pathUri) => {
-    console.log({fileName, pathUri})
+    console.log({ fileName, pathUri });
     const reference = storage().ref(fileName);
     await reference.putFile(pathUri);
 
@@ -98,13 +96,38 @@ const Akun = () => {
         }}>
         {/* Gambar pengguna */}
         <TouchableWithoutFeedback onPress={() => {
-          launchImageLibrary({ mediaType: 'photo' })
-            .then(async(src) => {
-              const {fileName, uri} = src.assets[0];
+          Alert.alert(
+            'Ubah gambar',
+            'Pilih sumber gambar',
+            [
+              { text: 'Batal', style: 'cancel' },
+              {
+                text: 'Galeri',
+                onPress: () => {
+                  launchImageLibrary({ mediaType: 'photo' })
+                    .then(async (src) => {
+                      const { fileName, uri } = src.assets[0];
 
-              await uploadImage(fileName, uri);
-            })
-            .catch(() => ToastAndroid.show('Batal memilih gambar', ToastAndroid.BOTTOM));
+                      await uploadImage(fileName, uri);
+                    })
+                    .catch(() => ToastAndroid.show('Batal memilih gambar', ToastAndroid.BOTTOM));
+                },
+              },
+              {
+                text: 'Kamera',
+                onPress: () => {
+                  launchCamera({ mediaType: 'photo' })
+                    .then(async (src) => {
+                      const { fileName, uri } = src.assets[0];
+
+                      await uploadImage(fileName, uri);
+                    })
+                    .catch(() => ToastAndroid.show('Batal mengambil gambar', ToastAndroid.BOTTOM));
+                },
+              },
+            ]
+          );
+
         }}>
           <Image
             source={{
