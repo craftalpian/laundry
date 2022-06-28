@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier */
+/* eslint-disable react-native/no-inline-styles */
 import React, { useEffect, useState } from 'react';
 import {
   Text,
@@ -7,10 +8,12 @@ import {
   Image,
   StatusBar,
   TextInput,
+  TouchableWithoutFeedback,
   TouchableHighlight,
 } from 'react-native';
 import { auth } from '../../components/firebase/fire';
-import { updateProfile, updateCurrentUser } from 'firebase/auth'
+import { updateProfile, updateCurrentUser } from 'firebase/auth';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 const Akun = () => {
   const [editable, setEditable] = useState(false);
@@ -18,14 +21,14 @@ const Akun = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [uid, setUid] = useState('');
+  const [address, setAddress] = useState('');
+  const [pathUrl, setPathUrl] = useState(null);
 
   useEffect(() => {
-    const { displayName, phoneNumber, photoURL, email, uid } = auth.currentUser;
+    const { displayName, phoneNumber, photoURL, email } = auth.currentUser;
     setFullName(displayName);
     setEmail(email);
     setPhoneNumber(phoneNumber);
-    setUid(uid);
 
     console.log(auth.currentUser)
   }, []);
@@ -43,21 +46,23 @@ const Akun = () => {
           borderBottomRightRadius: 20,
         }}>
         {/* Gambar pengguna */}
-        <Image
-          source={{
-            uri: profilePicture,
-          }}
-          style={{
-            height: 100,
-            width: 100,
-            borderRadius: 100,
-            borderWidth: 1,
-            borderColor: '#FAFAFA',
-            alignSelf: 'center',
-            marginTop: 45,
-            marginBottom: 15,
-          }}
-        />
+        <TouchableWithoutFeedback onPress={() => launchImageLibrary({ mediaType: 'photo' }, (res) => console.log(res))}>
+          <Image
+            source={{
+              uri: profilePicture,
+            }}
+            style={{
+              height: 100,
+              width: 100,
+              borderRadius: 100,
+              borderWidth: 1,
+              borderColor: '#FAFAFA',
+              alignSelf: 'center',
+              marginTop: 45,
+              marginBottom: 15,
+            }}
+          />
+        </TouchableWithoutFeedback>
       </View>
       {/* Membuat komponen profile */}
       <View style={{ flex: 1 }}>
@@ -87,7 +92,7 @@ const Akun = () => {
           />
         </View>
 
-        <View style={{borderBottomWidth: 1,borderColor: '#E0E0E0', marginBottom: 15, marginHorizontal: 15}} />
+        <View style={{ borderBottomWidth: 1, borderColor: '#E0E0E0', marginBottom: 15, marginHorizontal: 15 }} />
 
         <View style={{ marginHorizontal: 20 }}>
           <Text
@@ -114,32 +119,6 @@ const Akun = () => {
           />
         </View>
 
-        {/* <View style={{borderBottomWidth: 1,borderColor: '#E0E0E0', marginBottom: 15, marginHorizontal: 15}} />
-
-        <View style={{ marginHorizontal: 20 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontFamily: 'TitilliumWeb-Bold',
-              color: 'black',
-              fontWeight: 'bold',
-            }}>
-            Nomor Telepon
-          </Text>
-          <TextInput
-            placeholder={'Masukkan Nomor Telepon Anda'}
-            value={phoneNumber}
-            style={{
-              fontSize: 14,
-              fontFamily: 'TitilliumWeb-Light',
-              color: 'gray',
-              paddingLeft: 0,
-              paddingTop: 5,
-            }}
-            editable={editable}
-          />
-        </View> */}
-
         <View
           style={{
             marginTop: 25,
@@ -147,14 +126,12 @@ const Akun = () => {
             justifyContent: 'flex-end',
             flexDirection: 'row',
           }}>
-          <TouchableHighlight underlayColor={'#FFFFFF'} onPress={async() => {
+          <TouchableHighlight underlayColor={'#FFFFFF'} onPress={async () => {
             setEditable(!editable)
             if (editable) {
               try {
-                const act = await updateProfile(auth.currentUser, { displayName: fullName, photoURL: profilePicture })
-                const dos = await updateCurrentUser(auth.currentUser, { phoneNumber })
-                console.log(act)
-                console.log(dos)
+                await updateProfile(auth.currentUser, { displayName: fullName, photoURL: profilePicture })
+                await updateCurrentUser(auth.currentUser, { phoneNumber })
 
                 const user = auth.currentUser
                 console.log(user)
