@@ -14,6 +14,7 @@ import {
   TouchableHighlight,
   ToastAndroid,
   Alert,
+  PermissionsAndroid,
 } from 'react-native';
 import { auth, app } from '../../components/firebase/fire';
 import { updateProfile } from 'firebase/auth';
@@ -36,6 +37,30 @@ const Akun = () => {
     const userList = useSnapshot.docs.map(doc => doc.data());
     return userList.filter((data) => data.email === fEmail);
   }
+
+  const requestCameraPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        {
+          title: "Cool Photo App Camera Permission",
+          message:
+            "Cool Photo App needs access to your camera " +
+            "so you can take awesome pictures.",
+          buttonNeutral: "Ask Me Later",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK"
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("You can use the camera");
+      } else {
+        console.log("Camera permission denied");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
 
   const uploadImage = async (fileName, pathUri) => {
     console.log({ fileName, pathUri });
@@ -77,7 +102,7 @@ const Akun = () => {
       }
     }
 
-    // uploadImage()
+    requestCameraPermission()
 
     fetch();
   }, []);
